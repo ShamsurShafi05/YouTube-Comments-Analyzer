@@ -1,0 +1,397 @@
+/* YT Comment Lens — content.css */
+
+/* ── Checkbox overlay on thumbnail ── */
+.ytcl-checkbox-wrapper {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 9999;
+  /* FIX 1: hidden by default, shown via JS class or CSS hover on thumbnail */
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: auto !important;
+}
+
+.ytcl-checkbox-wrapper input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  background: rgba(0,0,0,0.85);
+  border: 2px solid rgba(255,255,255,0.9);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.ytcl-checkbox-wrapper input[type="checkbox"]:checked {
+  background: #ff0054;
+  border-color: #ff0054;
+}
+
+.ytcl-checkbox-wrapper input[type="checkbox"]:checked::after {
+  content: '✓';
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  display: block;
+  text-align: center;
+  line-height: 16px;
+}
+
+/*
+  FIX 1: Show checkbox when:
+  - The ytd-thumbnail / #thumbnail element is hovered (JS adds ytcl-cb-force-show on thumbnail mouseenter)
+  - The card is selected (always visible)
+  - The checkbox itself is hovered/focused
+  We use JS class ytcl-cb-force-show instead of CSS :hover on card
+  so it stays visible for the full duration the mouse is over the thumbnail.
+*/
+.ytcl-checkbox-wrapper.ytcl-cb-force-show,
+.ytcl-card-wrapper.ytcl-selected .ytcl-checkbox-wrapper,
+.ytcl-checkbox-wrapper:hover,
+.ytcl-checkbox-wrapper input:focus + * {
+  opacity: 1;
+}
+
+/* Selected card highlight */
+.ytcl-card-wrapper.ytcl-selected {
+  outline: 2px solid #ff0054;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ── Hover preview card ── */
+.ytcl-hover-card {
+  position: fixed;
+  z-index: 999999;
+  width: 320px;
+  background: #0f0f0f;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,0,84,0.2);
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px) scale(0.97);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ytcl-hover-card.ytcl-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.ytcl-hover-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ytcl-hover-card-logo {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #ff0054, #ff6b35);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.ytcl-hover-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.ytcl-hover-loading {
+  text-align: center;
+  padding: 12px 0;
+}
+
+.ytcl-hover-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: #ff0054;
+  border-radius: 50%;
+  animation: ytcl-spin 0.7s linear infinite;
+  margin: 0 auto 8px;
+}
+
+.ytcl-hover-loading p {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  margin: 0;
+}
+
+@keyframes ytcl-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ytcl-hover-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ytcl-stat-pill {
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.ytcl-stat-pill .value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.ytcl-stat-pill .label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 2px;
+}
+
+.ytcl-score-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ytcl-score-bar-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ytcl-score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff0054, #ff6b35);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.ytcl-score-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+}
+
+.ytcl-sentiment-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.ytcl-sentiment-chip {
+  flex: 1;
+  padding: 4px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.ytcl-sentiment-chip.pos { background: rgba(52,211,153,0.15); color: #34d399; }
+.ytcl-sentiment-chip.neu { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.ytcl-sentiment-chip.neg { background: rgba(251,113,133,0.15); color: #fb7185; }
+
+.ytcl-hover-snippet {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.4;
+  border-left: 2px solid #ff0054;
+  padding-left: 8px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.ytcl-hover-footer {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+}
+
+.ytcl-hover-error {
+  font-size: 11px;
+  color: #fb7185;
+  text-align: center;
+  padding: 8px 0;
+}
+
+/* ── Floating action bar (multi-select) ── */
+#ytcl-action-bar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0f0f0f;
+  border: 1px solid rgba(255,0,84,0.35);
+  border-radius: 40px;
+  padding: 10px 20px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.7), 0 0 40px rgba(255,0,84,0.1);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#ytcl-action-bar.ytcl-bar-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#ytcl-action-bar .ytcl-bar-count {
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+}
+
+#ytcl-action-bar .ytcl-bar-count span {
+  color: #ff0054;
+}
+
+#ytcl-action-bar button {
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 20px;
+  padding: 7px 18px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+#ytcl-btn-analyze {
+  background: linear-gradient(135deg, #ff0054, #ff6b35);
+  color: white;
+}
+
+#ytcl-btn-analyze:hover {
+  filter: brightness(1.1);
+  transform: scale(1.03);
+}
+
+#ytcl-btn-clear {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+}
+
+#ytcl-btn-clear:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+/* ── FIX 4: Right-click context menu ── */
+#ytcl-context-menu {
+  position: fixed;
+  z-index: 9999999;
+  width: 210px;
+  background: #141414;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,0,84,0.15);
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.95) translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform-origin: top left;
+}
+
+#ytcl-context-menu.ytcl-ctx-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translateY(0);
+}
+
+.ytcl-ctx-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 4px;
+}
+
+.ytcl-ctx-logo {
+  font-size: 13px;
+}
+
+.ytcl-ctx-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ytcl-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.ytcl-ctx-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.ytcl-ctx-item-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ytcl-ctx-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 4px 0;
+}
+
+.ytcl-ctx-muted {
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+}
+
+.ytcl-ctx-muted:hover {
+  color: rgba(255,255,255,0.6);
+}
