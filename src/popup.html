@@ -10,7 +10,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    width: 300px;
+    width: 320px;
     font-family: 'DM Sans', sans-serif;
     background: #0a0a0a;
     color: #fff;
@@ -25,172 +25,183 @@
   }
 
   .logo {
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     background: linear-gradient(135deg, #ff0054, #ff6b35);
     border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 16px;
   }
 
-  .logo-text h1 {
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1;
-  }
+  .logo-text h1 { font-size: 15px; font-weight: 700; line-height: 1; }
+  .logo-text p  { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
 
-  .logo-text p {
-    font-size: 10px;
-    color: rgba(255,255,255,0.4);
-    margin-top: 1px;
-  }
-
-  .section {
-    margin-bottom: 16px;
-  }
+  .section { margin-bottom: 16px; }
 
   label {
     display: block;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 11px; font-weight: 600;
     color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    text-transform: uppercase; letter-spacing: 0.06em;
     margin-bottom: 6px;
   }
 
   input[type="text"],
   input[type="password"],
-  input[type="number"],
-  select {
+  input[type="number"] {
     width: 100%;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
     padding: 9px 12px;
     color: #fff;
-    font-family: inherit;
-    font-size: 13px;
+    font-family: inherit; font-size: 13px;
     outline: none;
     transition: border-color 0.15s;
   }
 
-  input:focus, select:focus {
-    border-color: rgba(255,0,84,0.5);
-  }
+  input:focus { border-color: rgba(255,0,84,0.5); }
+  input[type="password"] { font-family: monospace; letter-spacing: 0.1em; }
 
-  input[type="password"] {
-    font-family: monospace;
-    letter-spacing: 0.1em;
-  }
-
-  .eye-wrap {
-    position: relative;
-  }
-
+  .eye-wrap { position: relative; }
   .eye-wrap input { padding-right: 36px; }
-
   .eye-btn {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.4);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 0;
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: rgba(255,255,255,0.4);
+    cursor: pointer; font-size: 14px; padding: 0;
   }
 
-  .save-btn {
-    width: 100%;
-    padding: 10px;
-    background: linear-gradient(135deg, #ff0054, #ff6b35);
-    border: none;
+  /* ── Groq key list ── */
+  .groq-key-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+  .groq-key-row {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
     border-radius: 8px;
-    color: #fff;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: filter 0.15s, transform 0.1s;
+    padding: 6px 10px;
+  }
+
+  .groq-key-row.active-key { border-color: rgba(52,211,153,0.4); }
+
+  .groq-key-index {
+    font-size: 10px; font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    width: 16px; flex-shrink: 0; text-align: center;
+  }
+
+  .groq-key-text {
+    flex: 1;
+    font-size: 12px; font-family: monospace;
+    color: rgba(255,255,255,0.75);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .groq-key-badge {
+    font-size: 9px; font-weight: 700;
+    background: rgba(52,211,153,0.15); color: #34d399;
+    border-radius: 8px; padding: 2px 6px; flex-shrink: 0;
+  }
+
+  .groq-key-remove {
+    background: none; border: none;
+    color: rgba(255,255,255,0.25); cursor: pointer;
+    font-size: 14px; padding: 0 2px; line-height: 1;
+    transition: color 0.15s; flex-shrink: 0;
+  }
+  .groq-key-remove:hover { color: #fb7185; }
+
+  .groq-add-row {
+    display: flex; gap: 6px; align-items: center;
+  }
+
+  .groq-add-row input { flex: 1; font-family: monospace; letter-spacing: 0.05em; }
+
+  .groq-add-btn {
+    flex-shrink: 0;
+    background: rgba(255,0,84,0.15);
+    border: 1px solid rgba(255,0,84,0.3);
+    border-radius: 8px;
+    color: #ff6b35; font-family: inherit; font-size: 13px; font-weight: 600;
+    padding: 9px 14px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .groq-add-btn:hover { background: rgba(255,0,84,0.25); }
+
+  .groq-hint {
+    font-size: 10px; color: rgba(255,255,255,0.28);
+    margin-top: 5px; line-height: 1.5;
+  }
+
+  /* ── Save button ── */
+  .save-btn {
+    width: 100%; padding: 10px;
+    background: linear-gradient(135deg, #ff0054, #ff6b35);
+    border: none; border-radius: 8px;
+    color: #fff; font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: filter 0.15s, transform 0.1s;
     margin-top: 4px;
   }
-
   .save-btn:hover { filter: brightness(1.1); }
   .save-btn:active { transform: scale(0.98); }
 
-  .status {
-    font-size: 12px;
-    text-align: center;
-    margin-top: 10px;
-    min-height: 18px;
-    color: #34d399;
-  }
-
+  .status { font-size: 12px; text-align: center; margin-top: 10px; min-height: 18px; color: #34d399; }
   .status.error { color: #fb7185; }
 
-  .divider {
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.07);
-    margin: 16px 0;
-  }
+  .divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 16px 0; }
 
-  .tip {
-    font-size: 11px;
-    color: rgba(255,255,255,0.35);
-    line-height: 1.5;
-    text-align: center;
-  }
-
+  .tip { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.5; text-align: center; }
   .tip a { color: #ff6b35; text-decoration: none; }
   .tip a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-  <div class="logo-row">
-    <div class="logo">🔍</div>
-    <div class="logo-text">
-      <h1>YT Comment Lens</h1>
-      <p>Comment analytics for YouTube</p>
-    </div>
+
+<div class="logo-row">
+  <div class="logo">🔍</div>
+  <div class="logo-text">
+    <h1>YT Comment Lens</h1>
+    <p>Comment analytics for YouTube</p>
   </div>
+</div>
 
-  <div class="section">
-    <label>YouTube Data API v3 Key</label>
-    <div class="eye-wrap">
-      <input type="password" id="yt-key" placeholder="AIza…" autocomplete="off">
-      <button class="eye-btn" id="yt-eye">👁</button>
-    </div>
+<div class="section">
+  <label>YouTube Data API v3 Key</label>
+  <div class="eye-wrap">
+    <input type="password" id="yt-key" placeholder="AIza…" autocomplete="off">
+    <button class="eye-btn" id="yt-eye">👁</button>
   </div>
+</div>
 
-  <div class="section">
-    <label>Groq API Key</label>
-    <div class="eye-wrap">
-      <input type="password" id="anthropic-key" placeholder="sk-ant-…" autocomplete="off">
-      <button class="eye-btn" id="ant-eye">👁</button>
-    </div>
+<div class="section">
+  <label>Groq API Keys <span style="color:rgba(255,255,255,0.25);font-size:10px;text-transform:none;letter-spacing:0">(add multiple for rate-limit fallback)</span></label>
+
+  <!-- Saved keys list -->
+  <div class="groq-key-list" id="groq-key-list"></div>
+
+  <!-- Add new key row -->
+  <div class="groq-add-row">
+    <input type="password" id="groq-new-key" placeholder="gsk_…" autocomplete="off">
+    <button class="groq-add-btn" id="groq-add-btn">+ Add</button>
   </div>
+  <p class="groq-hint">Keys rotate automatically on rate limit. Green badge = currently active key.</p>
+</div>
 
-  <div class="section">
-    <label>Comments to fetch per video</label>
-    <input type="number" id="max-comments" value="60" min="20" max="200" step="10">
-  </div>
+<div class="section">
+  <label>Comments to fetch per video</label>
+  <input type="number" id="max-comments" value="60" min="20" max="200" step="10">
+</div>
 
-  <button class="save-btn" id="save-btn">Save Settings</button>
-  <div class="status" id="status"></div>
+<button class="save-btn" id="save-btn">Save Settings</button>
+<div class="status" id="status"></div>
 
-  <hr class="divider">
+<hr class="divider">
 
-  <p class="tip">
-    Hover over a thumbnail for a quick preview.<br>
-    Check videos &amp; click "Analyze Selected" to compare.<br><br>
-    <a href="https://console.cloud.google.com/" target="_blank">Get YouTube API key →</a>
-  </p>
+<p class="tip">
+  Hover thumbnail for quick preview.<br>
+  Right-click any video for options.<br><br>
+  <a href="https://console.cloud.google.com/" target="_blank">Get YouTube API key →</a> &nbsp;|&nbsp;
+  <a href="https://console.groq.com/keys" target="_blank">Get Groq key →</a>
+</p>
 
-  <script src="popup.js"></script>
+<script src="popup.js"></script>
 </body>
 </html>

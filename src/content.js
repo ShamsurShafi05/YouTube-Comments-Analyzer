@@ -32,7 +32,6 @@
       'ytd-compact-video-renderer',
       'ytd-grid-video-renderer'
     ];
-
     selectors.forEach(sel => {
       document.querySelectorAll(sel).forEach(card => {
         if (card.dataset.ytclDecorated) return;
@@ -66,7 +65,6 @@
     const thumbnail = card.querySelector('ytd-thumbnail, #thumbnail');
     if (!thumbnail) return;
 
-    // Make wrapper relative for checkbox positioning
     thumbnail.style.position = 'relative';
     card.classList.add('ytcl-card-wrapper');
 
@@ -79,58 +77,40 @@
     cbWrapper.appendChild(cb);
     thumbnail.appendChild(cbWrapper);
 
-    // Checkbox logic
     cb.addEventListener('change', (e) => {
       e.stopPropagation();
       if (cb.checked) {
-        selectedVideos.set(videoId, {
-          title: getVideoTitleFromCard(card),
-          thumbnail: getThumbnailUrl(videoId)
-        });
+        selectedVideos.set(videoId, { title: getVideoTitleFromCard(card), thumbnail: getThumbnailUrl(videoId) });
         card.classList.add('ytcl-selected');
+        cbWrapper.classList.add('ytcl-cb-force-show');
       } else {
         selectedVideos.delete(videoId);
         card.classList.remove('ytcl-selected');
+        cbWrapper.classList.remove('ytcl-cb-force-show');
       }
       updateActionBar();
     });
 
-    // ── FIX 1 & 4: Checkbox visibility tied to thumbnail hover, not whole card ──
-    // Use the thumbnail element for mouse tracking so checkbox stays visible
-    // as long as the mouse is over the video thumbnail area.
-    thumbnail.addEventListener('mouseenter', () => {
-      cbWrapper.classList.add('ytcl-cb-force-show');
-    });
+    // Checkbox visible while hovering thumbnail
+    thumbnail.addEventListener('mouseenter', () => cbWrapper.classList.add('ytcl-cb-force-show'));
     thumbnail.addEventListener('mouseleave', () => {
-      // Only hide if NOT checked (selected checkboxes always stay visible)
-      if (!cb.checked) {
-        cbWrapper.classList.remove('ytcl-cb-force-show');
-      }
+      if (!cb.checked) cbWrapper.classList.remove('ytcl-cb-force-show');
     });
 
-    // ── FIX 2: Hover card on the card (whole card hover for preview) ──
+    // Hover card
     card.addEventListener('mouseenter', () => {
       clearTimeout(hoverTimeout);
-      hoverTimeout = setTimeout(() => {
-        showHoverCard(videoId, getVideoTitleFromCard(card), card);
-      }, 600);
+      hoverTimeout = setTimeout(() => showHoverCard(videoId, getVideoTitleFromCard(card), card), 600);
     });
-
     card.addEventListener('mouseleave', (e) => {
-      // Don't hide if moving to the hover card itself
       if (hoverCard && hoverCard.contains(e.relatedTarget)) return;
       clearTimeout(hoverTimeout);
       hideHoverCardDelayed();
     });
 
-    // ── FIX 4: Right-click context menu ──
+    // Right-click: pass everything as one snapshot object
     card.addEventListener('contextmenu', (e) => {
-      const videoData = {
-        id: videoId,
-        title: getVideoTitleFromCard(card),
-        thumbnail: getThumbnailUrl(videoId)
-      };
-      showContextMenu(e, videoData, cb, card);
+      showContextMenu(e, { videoId, title: getVideoTitleFromCard(card), thumbnail: getThumbnailUrl(videoId), cb, cbWrapper, card });
     });
   }
 
@@ -140,22 +120,15 @@
     hoverCard.className = 'ytcl-hover-card';
     hoverCard.id = 'ytcl-hover-card';
     document.body.appendChild(hoverCard);
-
     hoverCard.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
     hoverCard.addEventListener('mouseleave', () => hideHoverCardDelayed());
   }
 
   function showHoverCard(videoId, title, anchor) {
     hoverVideoId = videoId;
-
     const rect = anchor.getBoundingClientRect();
-    const cardW = 320;
-    const cardH = 350;
-    const margin = 16;
-
-    let left = rect.right + 12;
-    let top = rect.top + 8;
-
+    const cardW = 320, cardH = 350, margin = 16;
+    let left = rect.right + 12, top = rect.top + 8;
     if (left + cardW > window.innerWidth - margin) {
       left = rect.left - cardW - 12;
       if (left < margin) left = window.innerWidth - cardW - margin;
@@ -166,7 +139,6 @@
 
     hoverCard.style.left = `${left}px`;
     hoverCard.style.top = `${top}px`;
-
     hoverCard.innerHTML = `
       <div class="ytcl-hover-card-header">
         <div class="ytcl-hover-card-logo">🔍</div>
@@ -177,13 +149,9 @@
         <p>Analyzing comments…</p>
       </div>
     `;
-
     hoverCard.classList.add('ytcl-visible');
 
-    if (cachedAnalytics.has(videoId)) {
-      renderHoverContent(cachedAnalytics.get(videoId), videoId);
-      return;
-    }
+    if (cachedAnalytics.has(videoId)) { renderHoverContent(cachedAnalytics.get(videoId), videoId); return; }
 
     fetchAndAnalyze(videoId, title).then(data => {
       if (hoverVideoId !== videoId) return;
@@ -199,12 +167,8 @@
   function renderHoverContent(data, videoId) {
     const body = document.getElementById('ytcl-hc-body');
     if (!body || hoverVideoId !== videoId) return;
-
     const { analytics, commentCount } = data;
-    if (!analytics) {
-      body.innerHTML = '<div class="ytcl-hover-error">No data returned.</div>';
-      return;
-    }
+    if (!analytics) { body.innerHTML = '<div class="ytcl-hover-error">No data returned.</div>'; return; }
 
     const { sentimentBreakdown, overallScore, toxicComments, complaints, summary } = analytics;
     const total = (sentimentBreakdown?.positive || 0) + (sentimentBreakdown?.neutral || 0) + (sentimentBreakdown?.negative || 0) || 1;
@@ -230,7 +194,7 @@
         <div class="ytcl-sentiment-chip neg">😠 ${negP}%</div>
       </div>
       ${summary ? `<div class="ytcl-hover-snippet">${escapeHtml(summary.slice(0, 160))}…</div>` : ''}
-      <div class="ytcl-hover-footer">Hover ↑ • Click checkbox to compare</div>
+      <div class="ytcl-hover-footer">Hover ↑ • Right-click for options</div>
     `;
   }
 
@@ -251,16 +215,14 @@
       <button id="ytcl-btn-clear">✕ Clear</button>
     `;
     document.body.appendChild(bar);
-
-    document.getElementById('ytcl-btn-analyze').addEventListener('click', openSidePanel);
+    document.getElementById('ytcl-btn-analyze').addEventListener('click', () => openSidePanel(null));
     document.getElementById('ytcl-btn-clear').addEventListener('click', clearSelection);
   }
 
   function updateActionBar() {
     const bar = document.getElementById('ytcl-action-bar');
-    const countEl = document.getElementById('ytcl-sel-count');
     const count = selectedVideos.size;
-    countEl.textContent = count;
+    document.getElementById('ytcl-sel-count').textContent = count;
     if (count > 0) bar.classList.add('ytcl-bar-visible');
     else bar.classList.remove('ytcl-bar-visible');
   }
@@ -271,27 +233,26 @@
       el.classList.remove('ytcl-selected');
       const cb = el.querySelector('.ytcl-checkbox-wrapper input');
       if (cb) cb.checked = false;
-      // Also remove force-show since it's now unchecked
       const cbw = el.querySelector('.ytcl-checkbox-wrapper');
       if (cbw) cbw.classList.remove('ytcl-cb-force-show');
     });
     updateActionBar();
   }
 
-  async function openSidePanel(videoOverride) {
-    // videoOverride: single video object { id, title, thumbnail } from context menu
-    let videos;
-    if (videoOverride && videoOverride.id) {
-      // Single video analyze — temporarily add it if not already selected
-      videos = [videoOverride];
-    } else {
-      videos = Array.from(selectedVideos.entries()).map(([id, meta]) => ({ id, ...meta }));
-    }
+  // singleVideo: { videoId, title, thumbnail } or null for multi-select mode
+  async function openSidePanel(singleVideo) {
+    const videos = singleVideo
+      ? [{ id: singleVideo.videoId, title: singleVideo.title, thumbnail: singleVideo.thumbnail }]
+      : Array.from(selectedVideos.entries()).map(([id, meta]) => ({ id, ...meta }));
     await sendMessage({ type: 'SET_STORAGE', data: { ytcl_selected: videos, ytcl_cache: Object.fromEntries(cachedAnalytics) } });
     await sendMessage({ type: 'OPEN_SIDE_PANEL' });
   }
 
-  // ── FIX 4: Context Menu ────────────────────────────────────
+  // ── Context Menu ───────────────────────────────────────────
+  // _ctx is set once per right-click and read by the single set of
+  // button listeners wired up in injectContextMenu() — no cloneNode needed.
+  let _ctx = null;
+
   function injectContextMenu() {
     const menu = document.createElement('div');
     menu.id = 'ytcl-context-menu';
@@ -304,7 +265,8 @@
         <span class="ytcl-ctx-item-icon">🔬</span> Analyze this video
       </div>
       <div class="ytcl-ctx-item" id="ytcl-ctx-select">
-        <span class="ytcl-ctx-item-icon">☑️</span> <span id="ytcl-ctx-select-label">Select for comparison</span>
+        <span class="ytcl-ctx-item-icon">☑️</span>
+        <span id="ytcl-ctx-select-label">Select for comparison</span>
       </div>
       <div class="ytcl-ctx-divider"></div>
       <div class="ytcl-ctx-item ytcl-ctx-muted" id="ytcl-ctx-dismiss">
@@ -313,83 +275,62 @@
     `;
     document.body.appendChild(menu);
 
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-      if (!menu.contains(e.target)) hideContextMenu();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') hideContextMenu();
-    });
-
-    document.getElementById('ytcl-ctx-dismiss').addEventListener('click', hideContextMenu);
-  }
-
-  let ctxMenuData = null; // { videoData, cb, card }
-
-  function showContextMenu(e, videoData, cb, card) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    ctxMenuData = { videoData, cb, card };
-
-    const menu = document.getElementById('ytcl-context-menu');
-    const isSelected = selectedVideos.has(videoData.id);
-
-    // Update select label
-    document.getElementById('ytcl-ctx-select-label').textContent = isSelected
-      ? 'Deselect video'
-      : 'Select for comparison';
-
-    // Position menu
-    const menuW = 210;
-    const menuH = 140;
-    const margin = 8;
-    let x = e.clientX;
-    let y = e.clientY;
-    if (x + menuW > window.innerWidth - margin) x = window.innerWidth - menuW - margin;
-    if (y + menuH > window.innerHeight - margin) y = window.innerHeight - menuH - margin;
-
-    menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
-    menu.classList.add('ytcl-ctx-visible');
-
-    // Wire up actions fresh each time
-    const analyzeBtn = document.getElementById('ytcl-ctx-analyze');
-    const selectBtn = document.getElementById('ytcl-ctx-select');
-
-    const newAnalyze = analyzeBtn.cloneNode(true);
-    analyzeBtn.parentNode.replaceChild(newAnalyze, analyzeBtn);
-    newAnalyze.addEventListener('click', () => {
+    // All button handlers wired ONCE — they read _ctx at the moment of click,
+    // which is always the current right-click target (never stale / null).
+    document.getElementById('ytcl-ctx-analyze').addEventListener('click', () => {
+      if (!_ctx) return;
+      const snap = _ctx;
       hideContextMenu();
-      openSidePanel(ctxMenuData.videoData);
+      openSidePanel(snap);
     });
 
-    const newSelect = selectBtn.cloneNode(true);
-    selectBtn.parentNode.replaceChild(newSelect, selectBtn);
-    newSelect.addEventListener('click', () => {
+    document.getElementById('ytcl-ctx-select').addEventListener('click', () => {
+      if (!_ctx) return;
+      const { videoId, title, thumbnail, cb, cbWrapper, card } = _ctx;
       hideContextMenu();
-      const { videoData: vd, cb: checkbox, card: c } = ctxMenuData;
-      if (selectedVideos.has(vd.id)) {
-        selectedVideos.delete(vd.id);
-        c.classList.remove('ytcl-selected');
-        checkbox.checked = false;
-        const cbw = c.querySelector('.ytcl-checkbox-wrapper');
-        if (cbw) cbw.classList.remove('ytcl-cb-force-show');
+      if (selectedVideos.has(videoId)) {
+        selectedVideos.delete(videoId);
+        card.classList.remove('ytcl-selected');
+        cb.checked = false;
+        cbWrapper.classList.remove('ytcl-cb-force-show');
       } else {
-        selectedVideos.set(vd.id, { title: vd.title, thumbnail: vd.thumbnail });
-        c.classList.add('ytcl-selected');
-        checkbox.checked = true;
-        const cbw = c.querySelector('.ytcl-checkbox-wrapper');
-        if (cbw) cbw.classList.add('ytcl-cb-force-show');
+        selectedVideos.set(videoId, { title, thumbnail });
+        card.classList.add('ytcl-selected');
+        cb.checked = true;
+        cbWrapper.classList.add('ytcl-cb-force-show');
       }
       updateActionBar();
     });
+
+    document.getElementById('ytcl-ctx-dismiss').addEventListener('click', hideContextMenu);
+
+    // Close on outside click or Escape
+    document.addEventListener('click', (e) => { if (!menu.contains(e.target)) hideContextMenu(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideContextMenu(); });
+  }
+
+  function showContextMenu(e, ctx) {
+    e.preventDefault();
+    e.stopPropagation();
+    _ctx = ctx;
+
+    document.getElementById('ytcl-ctx-select-label').textContent =
+      selectedVideos.has(ctx.videoId) ? 'Deselect video' : 'Select for comparison';
+
+    const menu = document.getElementById('ytcl-context-menu');
+    const menuW = 210, menuH = 148, margin = 8;
+    let x = e.clientX, y = e.clientY;
+    if (x + menuW > window.innerWidth - margin) x = window.innerWidth - menuW - margin;
+    if (y + menuH > window.innerHeight - margin) y = window.innerHeight - menuH - margin;
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    menu.classList.add('ytcl-ctx-visible');
   }
 
   function hideContextMenu() {
     const menu = document.getElementById('ytcl-context-menu');
     if (menu) menu.classList.remove('ytcl-ctx-visible');
-    ctxMenuData = null;
+    _ctx = null;
   }
 
   // ── API Helpers ────────────────────────────────────────────
@@ -397,18 +338,15 @@
     const stored = await sendMessage({ type: 'GET_STORAGE', keys: ['ytApiKey', 'ytcl_maxComments'] });
     const apiKey = stored.ytApiKey;
     if (!apiKey) throw new Error('No YouTube API key set. Open the extension popup.');
-
     const maxResults = stored.ytcl_maxComments || 60;
 
     const commentsRes = await sendMessage({ type: 'FETCH_COMMENTS', videoId, apiKey, maxResults });
     if (!commentsRes.ok) throw new Error(commentsRes.error);
-
     const comments = commentsRes.data;
     if (!comments.length) return { analytics: null, commentCount: 0, comments: [] };
 
     const analysisRes = await sendMessage({ type: 'ANALYZE_COMMENTS', comments, videoTitle: title });
     if (!analysisRes.ok) throw new Error(analysisRes.error);
-
     return { analytics: analysisRes.data, commentCount: comments.length, comments, title, videoId };
   }
 
@@ -421,7 +359,6 @@
     });
   }
 
-  // ── Utils ──────────────────────────────────────────────────
   function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -432,7 +369,6 @@
     return '#fb7185';
   }
 
-  // ── Init ───────────────────────────────────────────────────
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();

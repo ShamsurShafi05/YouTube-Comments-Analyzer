@@ -14,14 +14,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     fetchComments(message.videoId, message.apiKey, message.maxResults)
       .then(data => sendResponse({ ok: true, data }))
       .catch(err => sendResponse({ ok: false, error: err.message }));
-    return true; // async
+    return true;
   }
 
   if (message.type === 'ANALYZE_COMMENTS') {
     analyzeWithGroq(message.comments, message.videoTitle)
       .then(data => sendResponse({ ok: true, data }))
       .catch(err => sendResponse({ ok: false, error: err.message }));
-    return true; // async
+    return true;
   }
 
   if (message.type === 'GET_STORAGE') {
@@ -35,6 +35,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+// ── YouTube comment fetcher ────────────────────────────────
 async function fetchComments(videoId, apiKey, maxResults = 100) {
   const allComments = [];
   let pageToken = '';
@@ -80,12 +81,21 @@ async function fetchComments(videoId, apiKey, maxResults = 100) {
   return allComments.slice(0, maxResults);
 }
 
+// ── Groq analyzer with multi-key round-robin fallback ─────
 async function analyzeWithGroq(comments, videoTitle) {
   const stored = await new Promise(res =>
-    chrome.storage.local.get(['groqKey'], res)
+    chrome.storage.local.get(['groqKeys', 'groqKeyIndex'], res)
   );
-  const groqKey = stored.groqKey; // reusing same storage key, no popup changes needed
-  if (!groqKey) throw new Error('No Groq API key set. Open the extension popup.');
+
+  // groqKeys is an array of key strings; support legacy single key too
+  const keys = stored.groqKeys && stored.groqKeys.length > 0
+    ? stored.groqKeys
+    : [];
+
+  if (!keys.length) throw new Error('No Groq API key set. Open the extension popup.');
+
+  // Start from the last-used index so we spread load evenly across keys
+  let startIndex = (stored.groqKeyIndex || 0) % keys.length;
 
   const commentTexts = comments
     .slice(0, 80)
@@ -127,33 +137,60 @@ Rules:
 - overallScore is 0-10 rating of comment section quality/positivity
 - index refers to the [index] numbers above`;
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${groqKey}`
-    },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',  // or 'mixtral-8x7b-32768'
-      max_tokens: 1500,
-      temperature: 0.3,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a JSON-only API. You never output markdown, explanations, or text outside of the JSON object.'
-        },
-        { role: 'user', content: prompt }
-      ]
-    })
+  const body = JSON.stringify({
+    model: 'llama-3.3-70b-versatile',
+    max_tokens: 1500,
+    temperature: 0.3,
+    messages: [
+      { role: 'system', content: 'You are a JSON-only API. You never output markdown, explanations, or text outside of the JSON object.' },
+      { role: 'user', content: prompt }
+    ]
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err?.error?.message || `Groq API error ${res.status}`);
+  let lastError = null;
+
+  // Try each key starting from startIndex, wrap around
+  for (let attempt = 0; attempt < keys.length; attempt++) {
+    const idx = (startIndex + attempt) % keys.length;
+    const key = keys[idx];
+
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+        body
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        const msg = err?.error?.message || `Groq API error ${res.status}`;
+        const isRateLimit = res.status === 429 || msg.toLowerCase().includes('rate limit');
+
+        if (isRateLimit && attempt < keys.length - 1) {
+          // Rate limited on this key — try the next one
+          console.warn(`[YT Comment Lens] Key #${idx + 1} rate-limited, trying next key…`);
+          lastError = new Error(`Key #${idx + 1} rate-limited`);
+          continue;
+        }
+        throw new Error(msg);
+      }
+
+      // Success — advance the index so next call starts from the following key
+      const nextIndex = (idx + 1) % keys.length;
+      chrome.storage.local.set({ groqKeyIndex: nextIndex });
+
+      const json = await res.json();
+      const raw = json.choices?.[0]?.message?.content || '{}';
+      const clean = raw.replace(/```json|```/g, '').trim();
+      return JSON.parse(clean);
+
+    } catch (e) {
+      // Network error or non-rate-limit error — don't retry
+      if (!e.message.includes('rate-limited')) throw e;
+      lastError = e;
+    }
   }
 
-  const json = await res.json();
-  const raw = json.choices?.[0]?.message?.content || '{}';
-  const clean = raw.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  // All keys exhausted
+  throw new Error(`All Groq API keys are rate-limited. Please wait or add more keys in the popup. (${lastError?.message})`);
 }
